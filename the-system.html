@@ -1,0 +1,639 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lukasz Rodzen · The system</title><meta name="description" content="A live Solana trading system, specified, hardened and run by one person."><meta name="robots" content="noindex"><link rel="canonical" href="https://tijan87.github.io/skynet-portfolio/the-system.html"><meta property="og:type" content="website"><meta property="og:url" content="https://tijan87.github.io/skynet-portfolio/the-system.html"><meta property="og:title" content="Lukasz Rodzen · The system"><meta property="og:description" content="A live Solana trading system, specified, hardened and run by one person."><meta property="og:image" content="https://tijan87.github.io/skynet-portfolio/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Lukasz Rodzen · The system"><meta name="twitter:description" content="A live Solana trading system, specified, hardened and run by one person."><meta name="twitter:image" content="https://tijan87.github.io/skynet-portfolio/og.png">
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#05080f"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305080f'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%2331d9ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#05080f; --surface:#0a1018; --surface-2:#0d141f;
+  --ink:#f2f6ff; --ink-2:#a7b4c9; --ink-3:#7d8ba3;
+  --accent:#31d9ff; --violet:#a877ff; --green:#58e7ad; --red:#ff8f8f;
+  --line:rgba(167,180,201,.13); --line-2:rgba(167,180,201,.24);
+  --display:"Space Grotesk","IBM Plex Sans",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --fs-h1:clamp(2.125rem,3.24vw + 1.34rem,4.25rem);
+  --fs-h2:clamp(1.625rem,1.33vw + 1.3rem,2.5rem);
+  --fs-h3:clamp(1.125rem,.48vw + 1.01rem,1.375rem);
+  --fs-lead:clamp(1.125rem,.38vw + 1.03rem,1.375rem);
+  --fs-body:clamp(1rem,.1vw + .98rem,1.0625rem);
+  --fs-num:clamp(2.25rem,2vw + 1.7rem,3.5rem);
+  --fs-label:.8125rem; --fs-cap:.875rem;
+  --w:70rem; --w-prose:42rem; --gutter:clamp(1.25rem,5vw,3rem);
+  --sec:clamp(4.5rem,9vw,8.5rem); --stack:clamp(1rem,1.6vw,1.5rem);
+  --ease:cubic-bezier(.23,1,.32,1); --r:14px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--fs-body)/1.62 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:where(a,button,summary):focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+img{max-width:100%;display:block}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
+h1{font-size:var(--fs-h1);line-height:1.04;letter-spacing:-.025em;max-inline-size:20ch}
+h2{font-size:var(--fs-h2);line-height:1.12;letter-spacing:-.018em;max-inline-size:26ch}
+h3{font-size:var(--fs-h3);line-height:1.25;letter-spacing:-.01em}
+p{margin:0;text-wrap:pretty}
+ul,ol{margin:0;padding:0;list-style:none}
+.lead{font-size:var(--fs-lead);line-height:1.45;color:var(--ink-2);max-inline-size:58ch}
+.label{font:500 var(--fs-label)/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.kicker{font:500 var(--fs-label)/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:16px;height:1px;background:var(--accent)}
+.cap{font-size:var(--fs-cap);line-height:1.5;color:var(--ink-3);max-inline-size:60ch}
+.wrap{width:min(100% - 2*var(--gutter),var(--w));margin-inline:auto}
+.prose{max-inline-size:var(--w-prose)}
+
+/* ground: static tint + grain; the only moving thing is the hero glow */
+.ground{position:fixed;inset:0;z-index:-1;background:var(--bg);pointer-events:none}
+.ground::before{content:"";position:absolute;inset:0;background:radial-gradient(70% 45% at 50% -10%,rgba(49,217,255,.06),transparent 70%)}
+.ground::after{content:"";position:absolute;inset:0;opacity:.45;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.glow{position:absolute;top:-22%;left:50%;transform:translate(-50%,0);width:min(90vw,900px);aspect-ratio:1;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,rgba(49,217,255,.14),transparent 62%);filter:blur(60px);opacity:0;
+  animation:glow-in 1.2s var(--ease) .3s forwards,drift 26s ease-in-out 1.5s infinite}
+@keyframes glow-in{to{opacity:.55}}
+@keyframes drift{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-46%,3%)}}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(5,8,15,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .2s var(--ease)}
+.nav.solid{border-bottom-color:var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:56px}
+.brand{display:inline-block;padding-block:16px;font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.brand b{color:var(--ink);font-weight:600}
+.brand .x{display:none}
+@media (min-width:720px){.brand .x{display:inline}}
+.tabs{display:flex;gap:2px}
+.tabs a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:999px;font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);transition:color .15s var(--ease),background .15s var(--ease)}
+.tabs a:hover{color:var(--ink)}
+.tabs a.on{color:var(--accent)}
+.tabs .lbl{display:none}
+@media (min-width:720px){.tabs .lbl{display:inline}}
+.bar{position:absolute;left:0;bottom:-1px;height:1px;width:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+@supports (animation-timeline:scroll(root block)){@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}.bar{animation:grow linear;animation-timeline:scroll(root block)}}
+
+/* hero */
+.hero{position:relative;padding-block:clamp(3.25rem,11vw,9.5rem) clamp(2.5rem,6vw,5rem)}
+.hero > .wrap > * + *{margin-top:var(--stack)}
+.hero h1{margin-top:.75rem}
+.hero .lead{margin-top:1.25rem}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:2rem!important}
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line-2);font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink);transition:border-color .15s var(--ease),color .15s var(--ease),background .15s var(--ease)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn .a{transition:transform .2s var(--ease)}
+.btn:hover .a{transform:translateX(3px)}
+
+/* proof strip */
+.stats{display:grid;gap:clamp(1.25rem,3vw,2.5rem);grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))}
+@media (max-width:640px){.stats.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem 1.25rem}.stats.hero-stats .n{font-size:1.9rem}}
+.stat{border-top:1px solid var(--line);padding-top:.85rem}
+.stat .n{display:block;font:500 var(--fs-num)/.95 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat .l{display:block;margin-top:.55rem;font-size:var(--fs-cap);color:var(--ink-3);line-height:1.35}
+.fn{margin-top:1.25rem;font-size:var(--fs-cap);line-height:1.5;color:var(--ink-3);max-inline-size:68ch}
+
+/* sections */
+.sec{padding-block:var(--sec);border-top:1px solid var(--line)}
+.sec .head > * + *{margin-top:.75rem}
+.sec .head .lead{margin-top:1.25rem}
+.sec .head + *{margin-top:clamp(2rem,4vw,3.5rem)}
+.grid2{display:grid;gap:clamp(1.75rem,4vw,3.5rem);align-items:start}
+.grid2 > *{min-width:0}
+@media (min-width:900px){.grid2{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}.grid2.rev{grid-template-columns:minmax(0,6fr) minmax(0,5fr)}}
+.points{display:flex;flex-direction:column;gap:1.1rem;counter-reset:pt;max-inline-size:60ch}
+.points li{position:relative;padding-left:2.4rem;color:var(--ink-2)}
+.points li::before{counter-increment:pt;content:counter(pt,decimal-leading-zero);position:absolute;left:0;top:.42em;font:500 .75rem/1 var(--mono);letter-spacing:.09em;color:var(--accent)}
+.note{margin-top:clamp(2rem,4vw,3rem);padding-top:1.25rem;border-top:1px solid var(--line);color:var(--ink-2);max-inline-size:none;padding-right:max(0px,100% - 68ch)}
+.note .kicker{display:flex;margin:0 0 .6rem}
+.quote{font-family:var(--display);font-size:clamp(1.25rem,.6vw + 1.1rem,1.6rem);line-height:1.3;color:var(--ink);max-inline-size:32ch;letter-spacing:-.01em}
+.quote + .cap{margin-top:.75rem}
+.metrics{display:grid;gap:clamp(1.25rem,3vw,2.5rem);grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));margin-top:clamp(2rem,4vw,3.5rem)}
+.metrics .stat .n{font-size:clamp(1.75rem,1.2vw + 1.4rem,2.5rem)}
+
+/* the one card */
+.card{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r);padding:clamp(1.25rem,2.5vw,2rem);
+  transition:border-color .18s var(--ease),transform .18s var(--ease),background .18s var(--ease)}
+.card > * + *{margin-top:.75rem}
+a.card:hover{border-color:var(--line-2);transform:translateY(-2px);background:var(--surface-2)}
+.card .card{border:0;padding:0;background:none}
+.card p{color:var(--ink-2)}
+.card .kicker{color:var(--ink-3)}
+.cards{display:grid;gap:14px}
+.c2{grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))}
+.c3{grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+.c4{grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))}
+.cards.c4 .stat .l{min-block-size:2.7em}
+.arrow{display:inline-flex;align-items:center;gap:8px;font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.arrow .a{transition:transform .2s var(--ease)}
+a.card:hover .arrow .a{transform:translateX(3px)}
+.pill{display:inline-flex;align-items:center;gap:.5em;font:500 .75rem/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);background:rgba(167,180,201,.05);border:1px solid var(--line);border-radius:999px;padding:.5em .8em}
+.pill.me{color:var(--accent);border-color:rgba(49,217,255,.35)}
+.pill.me::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+/* figures */
+.shot{border-radius:var(--r);overflow:hidden;border:1px solid var(--line-2);background:#0b1220;box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+.fig{min-width:0;max-width:100%}
+.figs-x{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}
+.fig svg{width:100%;height:auto;display:block}
+@media (max-width:640px){.figs-x{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}.fig svg{min-width:600px}.ribbon svg{display:none}.ribbon .ribbon-list{display:grid}.ribbon .figs-x{-webkit-mask-image:none;mask-image:none;overflow:visible}}
+.fig .cap,.shot + .cap,.pane + .cap{margin-top:.75rem;max-inline-size:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:var(--fs-cap);color:var(--ink-2);margin-top:.75rem}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+
+/* timeline */
+.tl{display:grid;position:relative;margin-top:clamp(2rem,4vw,3rem)}
+.tl::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:var(--line-2)}
+.tl .m{position:relative;padding:0 0 1.4rem 1.75rem}
+.tl .m::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--bg);border:1px solid var(--accent)}
+.tl .d{font:500 var(--fs-label)/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.tl .t{color:var(--ink-2);margin-top:.35rem;max-inline-size:48ch}
+@media (min-width:900px){.tl{grid-template-columns:repeat(4,1fr);gap:2rem 1.5rem}.tl::before{content:none}.tl .m{padding:1.4rem .75rem 0 0}.tl .m::before{left:0;top:0}.tl .m::after{content:"";position:absolute;left:0;right:-1.5rem;top:3px;height:1px;background:var(--line-2)}.tl .m:nth-child(4n)::after{right:0}}
+
+/* infra diagram: colour is a legend here, not decoration */
+.infra{display:grid;gap:14px}
+@media (min-width:900px){.infra{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.node{border:1px solid var(--line);border-radius:var(--r);padding:1.25rem;background:linear-gradient(180deg,var(--surface-2),var(--surface));position:relative}
+.node::before{content:"";position:absolute;left:1.25rem;right:1.25rem;top:-1px;height:1px;background:var(--c)}
+.node.v{--c:var(--violet)} .node.c{--c:var(--accent)} .node.g{--c:var(--green)}
+.node .label{color:var(--c)}
+.node h3{margin-top:.5rem}
+.node .sub{font-size:var(--fs-cap);color:var(--ink-3);margin-top:.15rem}
+.node ul{margin-top:.9rem;display:flex;flex-direction:column;gap:.5rem}
+.node li{font-size:var(--fs-cap);color:var(--ink-2);line-height:1.45;padding-left:.9rem;position:relative}
+.node li::before{content:"";position:absolute;left:0;top:.6em;width:4px;height:4px;border-radius:50%;background:var(--c)}
+
+/* before / after */
+.ba{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+.ba .card{display:flex;flex-direction:column;gap:.9rem}
+.ba .card > * + *{margin-top:0}
+.ba .lab{font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.35rem}
+.ba .now .lab{color:var(--green)}
+.ba .broke,.ba .now{font-size:var(--fs-cap);line-height:1.5;color:var(--ink-2)}
+.ba .now{color:var(--ink)}
+.ba .big{margin-top:auto;padding-top:.8rem;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:.3rem}
+.ba .big .n{font:500 1.35rem/1 var(--mono);letter-spacing:-.02em;color:var(--ink)}
+.ba .big .l{font-size:var(--fs-cap);color:var(--ink-3)}
+.ba .when{font:500 .75rem/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+
+/* tiles */
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}
+.tile .n{display:block;font:500 clamp(2rem,1.5vw + 1.5rem,2.75rem)/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.tile .l{color:var(--ink);margin-top:.75rem;font-weight:500}
+.tile .s{color:var(--ink-3);font-size:var(--fs-cap);margin-top:.35rem;line-height:1.5}
+
+/* keys */
+.keys{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));align-items:stretch}
+.key{display:flex;flex-direction:column}
+.key .no{margin-top:auto;padding-top:.9rem}
+.key .no.ok{color:var(--green)}
+.key{border:1px solid var(--line);border-radius:var(--r);padding:1.25rem;background:linear-gradient(180deg,var(--surface-2),var(--surface));position:relative}
+.key::before{content:"";position:absolute;left:1.25rem;right:1.25rem;top:-1px;height:1px;background:var(--c)}
+.key.g{--c:var(--green)} .key.c{--c:var(--accent)}
+.key h3{display:flex;align-items:center;gap:10px}
+.key h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.key ul{margin-top:.9rem;display:flex;flex-wrap:wrap;gap:6px}
+.key li{font-size:var(--fs-cap);color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:.3rem .6rem}
+.key .no{margin-top:auto;padding-top:1.1rem;font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.rules{margin-top:14px;border-top:1px solid var(--line);padding-top:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:.55rem 1.75rem;font-size:var(--fs-cap);color:var(--ink-2)}
+.rules .lab{grid-column:1/-1;font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+.rules span{position:relative;padding-left:.8rem}
+.rules span::before{content:"";position:absolute;left:0;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--green)}
+
+/* loop */
+.loop{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}
+.stage{position:relative}
+.stage .idx{font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;color:var(--accent)}
+.stage h3{margin-top:.5rem}
+.stage p{font-size:var(--fs-cap);line-height:1.5}
+.stage .ev{margin-top:.9rem;padding-top:.75rem;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3);line-height:1.45}
+.stage .ev b{display:block;font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem}
+.stage .pill{position:absolute;top:1.1rem;right:1.1rem;margin:0}
+.routes{display:flex;flex-wrap:wrap;gap:.5rem 1.75rem;margin-top:1.5rem;font-size:var(--fs-cap);color:var(--ink-2)}
+.routes b{color:var(--ink);font-weight:500}
+
+/* lanes */
+.lanes{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+.lane ul{display:flex;flex-direction:column;gap:.5rem}
+.lane li{font-size:var(--fs-cap);color:var(--ink-2);padding:.5rem .75rem;border:1px solid var(--line);border-radius:10px;line-height:1.4}
+.lane li.x{border-style:dashed}
+.lane.ext .label{color:var(--violet)}
+
+/* scorecard */
+.score{display:flex;flex-direction:column;gap:.7rem}
+.row{display:grid;grid-template-columns:1fr auto;gap:.3rem .9rem;align-items:center}
+.row .l{font-size:var(--fs-cap);color:var(--ink)}
+.row .v{font:500 .8rem/1 var(--mono);color:var(--ink-2);white-space:nowrap}
+.row .b{grid-column:1/-1;height:3px;border-radius:2px;background:rgba(167,180,201,.1);overflow:hidden}
+.row .b i{display:block;height:100%;width:var(--w);background:var(--green);transform-origin:0 50%;transform:scaleX(0);transition:transform .9s var(--ease) .15s}
+.row.part .b i{background:var(--accent)}
+.in .row .b i{transform:scaleX(1)}
+.row .s{grid-column:1/-1;font-size:var(--fs-cap);color:var(--ink-3)}
+.lineage{display:flex;flex-direction:column}
+.lineage li{display:grid;grid-template-columns:9rem 1fr;gap:.75rem;font-size:var(--fs-cap);color:var(--ink-2);line-height:1.45;padding:.7rem 0;border-top:1px solid var(--line)}
+.lineage li b{color:var(--ink);font-weight:500}
+@media (max-width:480px){.lineage li{grid-template-columns:1fr;gap:.2rem}}
+
+/* chain */
+.chain{display:grid;gap:1.25rem 1.25rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));counter-reset:ch}
+@media (min-width:900px){.chain{grid-template-columns:repeat(3,1fr)}}
+.chain .c{border-top:1px solid var(--line);padding-top:.8rem}
+.chain .c::before{counter-increment:ch;content:counter(ch,decimal-leading-zero);font:500 .75rem/1 var(--mono);letter-spacing:.09em;color:var(--accent)}
+.chain .c h3{font-size:1rem;margin-top:.45rem}
+.chain .c p{font-size:var(--fs-cap);color:var(--ink-2);line-height:1.45;margin-top:.35rem}
+.gaplife{margin-top:clamp(2rem,4vw,3rem)}
+.gaplife ol{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));margin-top:.9rem}
+.gaplife li{font-size:var(--fs-cap);color:var(--ink-2);line-height:1.45}
+.gaplife li b{display:block;font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.25rem}
+
+/* gates */
+.gates{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr))}
+.gate{display:grid;gap:.5rem;align-content:start}
+.gate > * + *{margin-top:0}
+.gate .claim{color:var(--ink);font-weight:500;line-height:1.4;min-block-size:2.8em}
+.gate .does{color:var(--ink-2);font-size:var(--fs-cap);line-height:1.5;padding-left:.8rem;border-left:2px solid var(--accent)}
+.gate .lab{font:500 .75rem/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+
+/* recent runs */
+.runs li{display:grid;grid-template-columns:3rem 1fr;gap:.15rem .9rem;padding:.65rem 0;border-top:1px solid var(--line);font-size:var(--fs-cap)}
+.runs li:first-child{border-top:0;padding-top:0}
+.runs .n{font:500 .8rem/1.4 var(--mono);color:var(--accent);grid-row:span 2}
+.runs .t{color:var(--ink)}
+.runs .s{color:var(--ink-3);font-size:var(--fs-cap)}
+
+/* knowledge columns */
+.cols{display:grid;gap:1.5rem 1.25rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}
+.col{border-top:1px solid var(--line);padding-top:1rem}
+.col .sub{font-size:var(--fs-cap);color:var(--ink-3);margin-top:.3rem}
+.col ul{margin-top:.8rem;display:flex;flex-wrap:wrap;gap:6px}
+.col li{font-size:var(--fs-cap);color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:.25rem .55rem}
+
+/* who + close */
+.who{display:grid;gap:1rem 3rem;align-items:start;border-top:1px solid var(--line);padding-top:1.5rem}
+@media (min-width:800px){.who{grid-template-columns:1fr 1.4fr}}
+.who .role{font:500 var(--fs-label)/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-top:.4rem}
+.who .contact{margin-top:.9rem;font-size:var(--fs-cap);color:var(--ink-2)}
+.who .contact a{color:var(--accent)}
+.who p{color:var(--ink-2);max-inline-size:60ch}
+.sessions{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}
+.nextlink{margin-top:clamp(2.5rem,5vw,4rem)}
+.nextlink .card{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.nextlink .card > * + *{margin-top:0}
+
+/* footer */
+.foot{border-top:1px solid var(--line);padding:2.5rem 0 3rem}
+.foot .wrap{display:flex;flex-wrap:wrap;gap:1rem 3rem;justify-content:space-between;align-items:baseline}
+.foot p{font-size:var(--fs-cap);color:var(--ink-3);max-inline-size:70ch;line-height:1.55}
+.foot a{color:var(--ink-2)}
+.foot a:hover{color:var(--accent)}
+
+/* landing */
+.pick{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))}
+.pick .card{display:flex;flex-direction:column;padding:clamp(1.5rem,3vw,2.25rem)}
+.pick .card > p{flex:1 1 auto}
+.pick h2{font-size:clamp(1.5rem,1vw + 1.2rem,2rem);margin-top:.6rem;max-inline-size:none}
+.name{font:600 var(--fs-h3)/1.25 var(--display);letter-spacing:-.01em}
+.skip{position:absolute;left:-999px;top:8px;z-index:100;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.skip:focus{left:8px}
+.pick .nums{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--line)}
+.pick .nums .n{display:block;font:500 1.5rem/1 var(--mono);letter-spacing:-.02em;color:var(--ink)}
+.pick .nums .l{display:block;font-size:var(--fs-cap);color:var(--ink-3);margin-top:.35rem}
+.pick .arrow{margin-top:auto;padding-top:1.5rem}
+.land .sec{border-top:0;padding-top:0}
+
+@media print{.js .rv{opacity:1!important;transform:none!important}.ground,.glow,.skip,.bar{display:none}.nav{position:static}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.sec{break-inside:auto}.card{break-inside:avoid}}
+
+/* motion */
+.js .rv{opacity:0;transform:translateY(14px);transition:opacity .48s var(--ease) calc(var(--i,0)*50ms),transform .48s var(--ease) calc(var(--i,0)*50ms)}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .js .rv{opacity:1;transform:none;transition:none}
+  .glow{opacity:.35;animation:none}
+  a.card:hover{transform:none}
+  .row .b i{transition:none;transform:scaleX(1)}
+  .btn .a,.arrow .a{transition:none}
+  .bar{animation:none!important;transform:none!important}
+}
+@media (max-width:480px){
+  :root{--fs-cap:.9375rem}
+  .stage .ev b,.gate .lab,.ba .lab,.gaplife li b,.ba .when,.rules .lab,.key .no,.pill{font-size:.75rem}
+}
+/* ===== v6 components: expandable steps, flows, matrix, funnel ===== */
+.phase{margin-top:clamp(2rem,4vw,3rem)}
+.phase + .phase{margin-top:clamp(1.5rem,3vw,2.25rem)}
+.phase .ph{display:flex;align-items:baseline;gap:14px;padding-bottom:.6rem;border-bottom:1px solid var(--line)}
+.phase .ph .num{font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;color:var(--accent);white-space:nowrap}
+.phase .ph h3{font-size:1.05rem;white-space:nowrap}
+.phase .ph .who{margin-left:auto;font-size:var(--fs-cap);color:var(--ink-3);text-align:right}
+.acc{border-bottom:1px solid var(--line)}
+.acc summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:3.2rem 1fr auto;gap:.5rem 1rem;align-items:start;padding:.95rem 0;color:var(--ink)}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary .i{font:500 var(--fs-label)/1.6 var(--mono);letter-spacing:.06em;color:var(--ink-3)}
+.acc summary .t{font-weight:500;line-height:1.45}
+.acc summary .t small{display:block;font-weight:400;color:var(--ink-3);font-size:var(--fs-cap);margin-top:.15rem}
+.acc summary .c{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-3);transition:transform .3s var(--ease),border-color .2s,color .2s;flex:none;margin-top:.1rem}
+.acc summary .c::before{content:"";width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translate(-1px,-1px)}
+.acc:hover summary .c{border-color:var(--accent);color:var(--accent)}
+.acc[open] summary .c{transform:rotate(180deg)}
+.acc .dbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease)}
+.acc[open] .dbody{grid-template-rows:1fr}
+.acc .dbody > div{overflow:hidden}
+.acc .in{padding:0 0 1.1rem 4.2rem;display:grid;gap:.8rem;color:var(--ink-2)}
+@media (min-width:800px){.acc .in{grid-template-columns:1.4fr 1fr;gap:1.5rem}.acc .in.one{grid-template-columns:1fr}.acc .in.one p{max-inline-size:68ch}}
+.acc .in p{font-size:var(--fs-cap);line-height:1.55}
+.acc .in dl{margin:0;display:grid;gap:.45rem;align-content:start;font-size:var(--fs-cap)}
+.acc .in dt{font:500 .72rem/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.acc .in dd{margin:0;color:var(--ink-2);line-height:1.45}
+.acc .in dd.block{color:var(--red)}
+.acc .in dd.me{color:var(--accent)}
+.acc .tag{display:inline-block;font:500 .75rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:.3rem .5rem;border-radius:6px;border:1px solid var(--line);color:var(--ink-2);margin:0 .3rem .3rem 0}
+.acc .tag.opus{border-color:rgba(49,217,255,.35);color:var(--accent)}.acc .tag.codex{border-color:rgba(168,119,255,.4);color:var(--violet)}.acc .tag.grok{border-color:rgba(88,231,173,.4);color:var(--green)}.acc .tag.script{border-color:var(--line-2);color:var(--ink-3)}.acc .tag.me{border-color:var(--ink);color:var(--ink)}
+.expand-all{font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);background:none;border:1px solid var(--line-2);border-radius:999px;padding:.6rem 1rem;cursor:pointer;min-height:44px}
+.expand-all:hover{color:var(--accent);border-color:var(--accent)}
+.flow{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));position:relative}
+.flow .fx{border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.15rem;background:linear-gradient(180deg,var(--surface-2),var(--surface));position:relative}
+.flow .fx .label{margin-bottom:.4rem}
+.flow .fx h3{font-size:1rem}
+.flow .fx:nth-child(1):nth-last-child(5) h3,.flow .fx:nth-child(1):nth-last-child(5) ~ .fx h3{min-block-size:2.5em}
+.flow .fx p{font-size:var(--fs-cap);color:var(--ink-2);line-height:1.5;margin-top:.4rem}
+.flow .fx .ar{position:absolute;right:-13px;top:50%;width:14px;height:1px;background:var(--line-2);display:none}
+@media (min-width:900px){.flow .fx:not(:last-child) .ar{display:block}.flow.c3{grid-template-columns:repeat(3,minmax(0,1fr))}.flow.c3 .fx:nth-child(3) .ar{display:none}}
+.matrix{width:100%;border-collapse:collapse;font-size:var(--fs-cap)}
+.matrix th{text-align:left;font:500 .72rem/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:.6rem 1.25rem .6rem 0;border-bottom:1px solid var(--line-2)}
+.matrix td{padding:.7rem 1.25rem .7rem 0;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top;line-height:1.45}
+.matrix td:first-child{color:var(--ink);font-weight:500;white-space:nowrap}
+.matrix .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.tablewrap{overflow-x:auto}
+@media (max-width:900px){.matrix{min-width:46rem}}
+.funnel{display:grid;gap:.9rem}
+.funnel .fr{display:grid;grid-template-columns:7rem 1fr;gap:1rem;align-items:center}
+.funnel .fr .n{font:500 1.4rem/1 var(--mono);letter-spacing:-.02em;color:var(--ink)}
+.funnel .fr .b{height:10px;border-radius:5px;background:rgba(167,180,201,.08);overflow:hidden}
+.funnel .fr .b i{display:block;height:100%;width:var(--w);border-radius:5px;background:linear-gradient(90deg,var(--violet),var(--accent));transform-origin:0 50%;transform:scaleX(0);transition:transform 1s var(--ease) .1s}
+.in .funnel .fr .b i{transform:scaleX(1)}
+.funnel .fr .l{grid-column:2;font-size:var(--fs-cap);color:var(--ink-3);margin-top:-.4rem}
+@media (max-width:480px){.funnel .fr{grid-template-columns:5rem 1fr}}
+@media (prefers-reduced-motion:reduce){.acc .dbody{transition:none}.funnel .fr .b i{transition:none;transform:scaleX(1)}}
+/* artefact panes */
+.pane{position:relative;border-radius:var(--r);border:1px solid var(--line-2);background:linear-gradient(180deg,#0b1220,#070c15);padding:1rem 1.15rem 1.1rem;font:400 .82rem/1.65 var(--mono);color:var(--ink-2);overflow-x:auto;box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
+.pane::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:.6;background:linear-gradient(120deg,rgba(168,119,255,.5),rgba(49,217,255,.55) 50%,rgba(88,231,173,.4));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.pane .bar3{display:flex;gap:6px;margin-bottom:.8rem}
+.pane .bar3 i{width:9px;height:9px;border-radius:50%;background:rgba(167,180,201,.18)}
+.pane .bar3 i:first-child{background:rgba(255,143,143,.5)}.pane .bar3 i:nth-child(2){background:rgba(255,205,120,.45)}.pane .bar3 i:nth-child(3){background:rgba(88,231,173,.5)}
+.pane div.ln{white-space:pre-wrap;word-break:break-word;padding:.12rem 0}
+.pane .k{color:var(--accent)} .pane .g{color:var(--green)} .pane .v{color:var(--violet)} .pane .d{color:var(--ink-3)} .pane .r{color:var(--red)} .pane .w{color:var(--ink)}
+.pane + .cap{margin-top:.75rem}
+/* ===== v8: progressive disclosure ===== */
+details.more{margin-top:clamp(1.5rem,3vw,2.25rem)}
+details.more > summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);padding:.7rem 0;min-height:44px;transition:color .15s var(--ease)}
+details.more > summary::-webkit-details-marker{display:none}
+details.more > summary:hover{color:var(--accent)}
+details.more > summary .c{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;transition:transform .3s var(--ease),border-color .2s}
+details.more > summary .c::before{content:"";width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translate(-1px,-1px)}
+details.more[open] > summary .c{transform:rotate(180deg)}
+details.more > summary .alt{display:none}
+details.more[open] > summary .alt{display:inline}
+details.more[open] > summary .def{display:none}
+details.more > .dbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ease)}
+details.more[open] > .dbody{grid-template-rows:1fr}
+details.more > .dbody > div{overflow:hidden}
+details.more .inner{padding-top:1rem;display:grid;gap:clamp(1.25rem,2.5vw,2rem)}
+details.more .inner .metrics{margin-top:0}
+details.more .inner .note{margin-top:0;border-top:0;padding-top:0}
+details.more .inner .fn{margin-top:0;max-inline-size:none}
+details.more .inner .fn{max-inline-size:74ch}
+@media (min-width:900px){details.more .inner > .points{max-inline-size:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem 2.5rem}details.more .inner.two > .points{grid-template-columns:minmax(0,1fr)}}
+.summ{margin-top:1rem;color:var(--ink-2);max-inline-size:60ch}
+.lanes-strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr))}
+@media (min-width:1100px){.lanes-strip{grid-template-columns:repeat(7,minmax(0,1fr))}}
+.lanes-strip .ln{border:1px solid var(--line);border-radius:12px;padding:.9rem 1rem;background:linear-gradient(180deg,var(--surface-2),var(--surface))}
+.lanes-strip .ln b{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink);font-size:.95rem}
+.lanes-strip .ln b i{width:8px;height:8px;border-radius:50%;flex:none}
+.lanes-strip .ln b{white-space:nowrap}
+.lanes-strip .ln span{display:block;font-size:.8rem;color:var(--ink-3);margin-top:.35rem;line-height:1.4}
+@media (max-width:640px){.lanes-strip .ln:last-child{grid-column:1/-1}}
+details.phase-acc{border-top:1px solid var(--line)}
+details.phase-acc > summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto auto 1fr auto auto;gap:14px;align-items:baseline;padding:1rem 0}
+details.phase-acc > summary .chev{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-3);align-self:center;transition:transform .3s var(--ease),border-color .2s,color .2s}
+details.phase-acc > summary .chev::before{content:"";width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translate(-1px,-1px)}
+details.phase-acc:hover > summary .chev{border-color:var(--accent);color:var(--accent)}
+details.phase-acc[open] > summary .chev{transform:rotate(180deg)}
+details.phase-acc > summary::-webkit-details-marker{display:none}
+details.phase-acc > summary .num{font:500 var(--fs-label)/1 var(--mono);letter-spacing:.09em;color:var(--accent);white-space:nowrap}
+details.phase-acc > summary h3{font-size:1.05rem;white-space:nowrap}
+details.phase-acc > summary .owner{font-size:var(--fs-cap);color:var(--ink-3);text-align:right}
+details.phase-acc > summary .cnt{font:500 .75rem/1 var(--mono);color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:.35rem .6rem;white-space:nowrap}
+details.phase-acc[open] > summary .cnt{color:var(--accent);border-color:rgba(49,217,255,.35)}
+details.phase-acc > .dbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ease)}
+details.phase-acc[open] > .dbody{grid-template-rows:1fr}
+details.phase-acc > .dbody > div{overflow:hidden}
+details.phase-acc .acc:first-child{border-top:1px solid var(--line)}
+@media (max-width:640px){details.phase-acc > summary{grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:start}details.phase-acc > summary .num{grid-column:1;grid-row:1}details.phase-acc > summary h3{grid-column:2;grid-row:1;white-space:normal}details.phase-acc > summary .chev{grid-column:3;grid-row:1}details.phase-acc > summary .owner{grid-column:1 / -1;grid-row:2;text-align:left;margin-top:0}details.phase-acc > summary .cnt{grid-column:1 / -1;grid-row:3;justify-self:start}}
+@media (prefers-reduced-motion:reduce){details.more > .dbody,details.phase-acc > .dbody{transition:none}}
+@media print{details.more > .dbody,details.phase-acc > .dbody{grid-template-rows:1fr}}
+.shot{transition:transform .5s var(--ease)}
+.shot.tilt{transform:perspective(1600px) rotateX(3deg);transform-origin:50% 100%}
+.shot.tilt:hover{transform:perspective(1600px) rotateX(0deg) translateY(-4px)}
+@media (prefers-reduced-motion:reduce){.shot,.shot.tilt{transform:none;transition:none}}
+.ribbon{margin-top:clamp(2rem,4vw,3rem)}
+.ribbon-list{display:none;gap:.5rem;counter-reset:rb}
+.ribbon-list li{display:flex;align-items:center;gap:10px;font-size:var(--fs-cap);color:var(--ink-2);padding:.55rem .8rem;border:1px solid var(--line);border-radius:10px}
+.ribbon-list li::before{counter-increment:rb;content:counter(rb);font:500 .72rem/1 var(--mono);color:var(--ink-3);width:1.2rem}
+.ribbon-list li.me{border-color:rgba(49,217,255,.35)}
+.ribbon-list li b{margin-left:auto;font:500 .66rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+/* full-width disclosure content */
+details.phase-acc > .dbody > div,details.more > .dbody > div,details.acc > .dbody > div{width:100%;min-width:0}
+details.more .inner{grid-template-columns:1fr}
+@media (min-width:900px){details.more .inner.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+/* banners */
+.banner{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,#0a1018,#070c15)}
+.banner svg{width:100%;height:auto;display:block}
+@media (max-width:640px){.banner{overflow-x:auto;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}.banner svg{min-width:560px}.banner.mini{mask-image:none;-webkit-mask-image:none}.banner.mini svg{min-width:0}}
+.banner.mini{border:0;border-radius:10px;margin:-.25rem 0 1rem;background:rgba(255,255,255,.02)}
+@media (max-width:640px){.banner.mini{display:none}}
+.pick .card > .banner{margin-top:0}
+/* phone type floor: nothing below 12px in HTML text */
+@media (max-width:480px){.acc .in dt,.matrix th,.ribbon-list li b{font-size:.75rem}}
+.authorship{margin-top:2rem;border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:12px;padding:1rem 1.25rem;max-inline-size:68ch;background:rgba(255,255,255,.02)}
+.authorship .label{margin-bottom:.4rem}
+.authorship p{color:var(--ink-2);font-size:var(--fs-cap);line-height:1.55}
+
+.overview{margin:0;scroll-margin-top:80px}
+.overview-heading{margin-bottom:1.5rem}
+.overview-heading h2{margin-top:.65rem;max-inline-size:none;font-size:clamp(1.65rem,2.3vw,2.5rem)}
+.overview [hidden]{display:none!important}
+.overview-tabs{display:flex;gap:0;border-bottom:1px solid var(--line-2);margin:0 0 1rem}
+.overview-tabs button{position:relative;display:flex;align-items:center;gap:.85rem;min-height:52px;padding:.75rem 1.35rem;border:0;background:transparent;color:var(--ink-2);font:500 1rem/1.3 var(--body);cursor:pointer;transition:color .18s ease,background .18s ease}
+.overview-tabs button::after{position:absolute;inset:auto 0 -1px;height:2px;background:var(--accent);content:'';opacity:0;transition:opacity .18s ease}
+.overview-tabs button[aria-selected=true]{color:var(--ink);background:linear-gradient(0deg,rgba(49,217,255,.055),transparent)}
+.overview-tabs button[aria-selected=true]::after{opacity:1}
+.overview-tabs button span{font:400 .75rem/1.4 var(--mono);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.overview-tabs button[aria-selected=true] span{color:var(--accent)}
+.overview-tabs button:hover{color:var(--ink);background:var(--surface-2)}
+.overview-tabs button:focus-visible,.overview-chapters button:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.overview-panel:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.overview-panel-title{display:flex;align-items:center;gap:1rem;margin:1.5rem 0 1rem;font:500 1.1rem/1.5 var(--body)}
+.overview-panel-title span{font:400 .8rem/1.5 var(--mono);color:var(--ink-3)}
+.overview-enhanced .overview-panel-title{display:none}
+.overview-screen{position:relative;isolation:isolate;aspect-ratio:16/9;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;background:var(--bg);box-shadow:0 24px 70px -40px rgba(0,0,0,.8)}
+.overview-screen video{display:block;width:100%;height:100%;object-fit:contain;background:var(--bg)}
+.overview-screen video:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+.overview-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;width:100%;border:0;padding:0;cursor:pointer;color:var(--ink);background:linear-gradient(180deg,transparent 30%,rgba(5,8,15,.12) 100%);font:500 .9rem/1 var(--body)}
+.overview-play-inner{display:flex;align-items:center;gap:10px;min-height:60px;padding:14px 22px 14px 16px;border:1px solid rgba(49,217,255,.5);border-radius:999px;background:rgba(5,8,15,.93);box-shadow:0 8px 40px rgba(0,0,0,.45);transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.overview-play svg{color:var(--accent);flex-shrink:0}
+.overview-play:hover .overview-play-inner{background:#101d2b;border-color:var(--accent);transform:translateY(-2px)}
+.overview-play:focus-visible{outline:3px solid var(--accent);outline-offset:-5px;border-radius:var(--r)}
+.overview-caption{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-top:.9rem;font-size:var(--fs-cap);line-height:1.5;color:var(--ink-2)}
+.overview-caption a{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line-2)}
+.overview-caption a:hover{color:var(--accent);text-decoration-color:var(--accent)}
+.overview-error{margin-top:.75rem;color:var(--ink-2);font-size:var(--fs-cap)}
+.overview-transcript,.overview-chapters{margin-top:.7rem;border-top:1px solid var(--line);color:var(--ink-2)}
+.overview-transcript summary,.overview-chapters summary{width:fit-content;min-height:44px;padding:.85rem 0;cursor:pointer;font-size:var(--fs-cap);color:var(--ink-2)}
+.overview-transcript summary:hover,.overview-chapters summary:hover{color:var(--ink)}
+.overview-transcript>div{max-width:var(--w-prose);padding:.3rem 0 1rem}
+.overview-transcript p+p{margin-top:1rem}
+.overview-chapters summary span{margin-left:1rem;font:400 .7rem/1.5 var(--mono);color:var(--ink-3)}
+.overview-chapters nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem 1rem;padding:.25rem 0 1rem}
+.overview-chapters button{display:flex;align-items:baseline;gap:.7rem;text-align:left;min-height:44px;padding:.6rem .5rem;border:0;border-radius:4px;background:transparent;color:var(--ink-2);font:400 .8rem/1.45 var(--body);cursor:pointer}
+.overview-chapters button span{flex-shrink:0;width:3.2em;color:var(--ink-3);font:400 .7rem/1.5 var(--mono)}
+.overview-chapters button:hover,.overview-chapters button[aria-current=true]{background:var(--surface-2);color:var(--ink)}
+.overview-chapters button[aria-current=true] span{color:var(--accent)}
+.overview-note{margin-top:1rem;font-size:.75rem;line-height:1.5;color:var(--ink-3)}
+@media(max-width:640px){.overview-heading .kicker{font-size:.75rem}.overview-tabs button{flex:1;justify-content:center;gap:.55rem;padding:.7rem .55rem;font-size:.9rem}.overview-tabs button span{font-size:.65rem}.overview-caption{display:block}.overview-caption a{display:flex;width:fit-content;margin-top:.25rem}.overview-play-inner{min-height:50px;padding:9px 16px 9px 11px}.overview-play svg{width:26px;height:26px}.overview-chapters nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem .5rem}}
+@media(max-width:360px){.overview-tabs button{font-size:.8rem;gap:.4rem}.overview-tabs button span{font-size:.6rem}.overview-chapters nav{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.overview-play-inner,.overview-tabs button,.overview-tabs button::after{transition:none}.overview-play:hover .overview-play-inner{transform:none}}
+.home-video{margin:clamp(2.25rem,4vw,3rem) 0 0}
+.home-video-kicker{margin-bottom:1rem}
+.home-video .overview-panel-title{display:none}
+.home-video .overview-caption{align-items:center}
+.home-video .overview-caption .btn.home-video-full{text-decoration:none;color:var(--ink-2);min-height:40px}
+.home-video .overview-caption .btn.home-video-full:hover{color:var(--accent)}
+@media(max-width:640px){.home-video .overview-caption>span{display:block}.home-video .overview-caption .btn.home-video-full{display:flex;width:fit-content;margin-top:.8rem}.home-video-verb{display:none}}
+@media print{.overview-play,.overview-tabs,.overview-chapters{display:none}.overview-screen{box-shadow:none}.overview-transcript>div{display:block}}
+</style></head><body class=""><div class="ground"></div><a class="skip" href="#content">Skip to content</a><nav class="nav" aria-label="Primary"><div class="wrap"><a class="brand" href="index.html"><b>Lukasz Rodzen</b><span class="x"> · case studies</span></a>
+<div class="tabs"><a href="index.html" class="" aria-label="Home"><span class="num">Home</span><span class="lbl"></span></a><a href="the-system.html" class="on" aria-label="Case study 1: The system" aria-current=page><span class="num">01</span><span class="lbl">The system</span></a><a href="how-i-ship.html" class="" aria-label="Case study 2: How I ship"><span class="num">02</span><span class="lbl">How I ship</span></a></div></div><div class="bar"></div></nav><main id="content"><section class="hero" id="cover"><div class="glow"></div><div class="wrap" data-stagger>
+<div class="rv"><div class="kicker">Case study 1 of 2 · the system</div></div><h1 class="rv">One person. Coding agents. Two servers. A live trading system with my own money on-chain.</h1><p class="lead rv">SKYNET turns Telegram calls and tracked wallets into ranked strategies and executes them on Solana with 66 ms of engine time per trade, from a Rust engine built by coding agents to my specification, tested and hardened under my direction.</p>
+<div class="actions rv"><a class="btn primary" href="#overview">Watch the 50-second overview <span class="a">↓</span></a><a class="btn" href="how-i-ship.html">Case study 2 · How I ship <span class="a">→</span></a></div>
+<div class="authorship rv"><div class="label">A note on authorship</div><p>I am not a backend, Rust or smart-contract engineer and do not represent myself as one. I define what the system must do, its boundaries and acceptance criteria; I direct coding agents through research, design, implementation and review; I validate the resulting behaviour and own the release decision. The implementation-level expertise described below is substantially agent-mediated.</p></div>
+</div></section>
+<section class="sec" style="border-top:0;padding-top:0"><div class="wrap"><div class="stats" data-stagger><div class="stat rv"><span class="n">16</span><span class="l">months · one human, agents build</span></div><div class="stat rv"><span class="n">1,300</span><span class="l">confirmed trades, my own funds</span></div><div class="stat rv"><span class="n">66 ms</span><span class="l">engine time per trade, median</span></div></div><details class="more rv"><summary><span class="def">Populations and dates</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><p class="fn rv">A trade is one position. 2,843 on-chain signatures stand behind the 1,300 confirmed positions: 1,685 buy legs and 1,158 sell legs, because a position can close in several legs. Engine time is the engine&#x27;s own work per trade, from price quote to submitted transaction, the dashboard&#x27;s Bot Speed: 66 ms median across the 1,228 buys with stage timings, 90% under 200 ms. From signal to confirmation on chain the median is 1.3 s, most of it the blockchain&#x27;s confirmation (625 ms median) and delivery from Telegram. Measured 3 September 2026.</p></div></div></div></details>
+<div style="margin-top:clamp(2.5rem,5vw,4rem)"><figure class="overview overview-enhanced rv" id="overview" aria-labelledby="overview-title">
+<div class="overview-heading"><div><div class="kicker">See the system in action</div><h2 id="overview-title">Trading intelligence, connected.</h2></div></div>
+<section class="overview-panel" id="video-panel-overview" aria-labelledby="video-title-overview" data-video="overview" data-title="overview">
+<h3 class="overview-panel-title" id="video-title-overview">Overview <span>0:50</span></h3>
+<div class="overview-screen">
+<video id="system-overview" src="assets/video/skynet-overview-v3-4k.mp4" controls playsinline preload="none" width="1920" height="1080" poster="assets/video/skynet-overview-v3-poster.webp" aria-label="SKYNET overview" aria-describedby="video-caption-overview">
+<track kind="captions" src="assets/video/skynet-overview-general-en.vtt" srclang="en" label="English">
+Your browser cannot play this video. <a href="assets/video/skynet-overview-v3-4k.mp4">Open the overview</a> or read the transcript below.
+</video>
+<button class="overview-play" type="button" aria-label="Play overview" aria-controls="system-overview" hidden><span class="overview-play-inner"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><path d="M11 6.5 26 16 11 25.5Z" fill="currentColor"/></svg><span class="overview-play-label">Play overview</span></span></button>
+</div>
+<div id="video-caption-overview" class="overview-caption"><span>Telegram signals. On-chain wallets. Research and execution.</span><a href="assets/video/skynet-overview-v3-4k.mp4">Open video <span aria-hidden="true">↗</span></a></div>
+<p class="overview-error" role="status" hidden>The video could not load. Try Play again, or use the Open video link.</p>
+
+<details class="overview-transcript"><summary>Read the transcript</summary><div><p>I built SKYNET to bring trading intelligence and execution into one platform.</p><p>It tracks Telegram signals and on-chain wallet activity, with rankings that make their historical performance easier to compare.</p><p>Wallet profiles reveal trading results and behavior, while market intelligence adds context about changing conditions.</p><p>The strategy engine lets you replay historical signals with different exit rules and position sizes.</p><p>The trading terminal brings together Phantom wallet swaps, automated copy trading through my custom Rust engine, and live position monitoring.</p><p>Detailed transaction timelines show the journey from the source signal through execution to on-chain confirmation.</p><p>SKYNET connects the research, the trade, and the evidence behind it.</p></div></details>
+</section>
+</figure></div></div></section><section class="sec" id="journey"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">How it was built</div></div><h2 class="rv">From a Grok chat window to a two-server operation in sixteen months</h2><p class="lead rv">Commits per month from git across the three repositories, April 2025 to September 2026. One file at the start; three codebases and an on-chain program at the end.</p></div><div class="fig"><div class="fig rv"><div class="figs-x"><svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Commits per month across three repositories"><line x1="28" x2="760" y1="226.0" y2="226.0" stroke="rgba(255,255,255,.06)"/><text x="22" y="230.0" text-anchor="end" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">0</text><line x1="28" x2="760" y1="166.1" y2="166.1" stroke="rgba(255,255,255,.06)"/><text x="22" y="170.1" text-anchor="end" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">200</text><line x1="28" x2="760" y1="106.2" y2="106.2" stroke="rgba(255,255,255,.06)"/><text x="22" y="110.2" text-anchor="end" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">400</text><line x1="28" x2="760" y1="46.3" y2="46.3" stroke="rgba(255,255,255,.06)"/><text x="22" y="50.3" text-anchor="end" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">600</text><rect x="30.0" y="201.7" width="36.1" height="22.8" rx="2" fill="#31d9ff"/><text x="48.1" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">25·04</text><rect x="70.1" y="135.9" width="36.1" height="88.6" rx="2" fill="#31d9ff"/><rect x="110.2" y="152.6" width="36.1" height="71.9" rx="2" fill="#31d9ff"/><text x="128.3" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">25·06</text><rect x="150.3" y="119.4" width="36.1" height="105.1" rx="2" fill="#31d9ff"/><rect x="190.4" y="205.3" width="36.1" height="19.2" rx="2" fill="#31d9ff"/><text x="208.5" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">25·08</text><rect x="230.6" y="153.5" width="36.1" height="71.0" rx="2" fill="#31d9ff"/><rect x="270.7" y="142.2" width="36.1" height="82.3" rx="2" fill="#31d9ff"/><text x="288.7" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">25·10</text><rect x="310.8" y="173.3" width="36.1" height="51.2" rx="2" fill="#31d9ff"/><rect x="310.8" y="156.5" width="36.1" height="15.3" rx="2" fill="#a877ff"/><rect x="350.9" y="77.2" width="36.1" height="147.3" rx="2" fill="#31d9ff"/><rect x="350.9" y="73.3" width="36.1" height="2.4" rx="2" fill="#a877ff"/><text x="368.9" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">25·12</text><rect x="391.0" y="147.9" width="36.1" height="76.6" rx="2" fill="#31d9ff"/><rect x="391.0" y="134.7" width="36.1" height="11.7" rx="2" fill="#a877ff"/><rect x="431.1" y="134.1" width="36.1" height="90.4" rx="2" fill="#31d9ff"/><text x="449.2" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">26·02</text><rect x="471.2" y="31.1" width="36.1" height="193.4" rx="2" fill="#31d9ff"/><rect x="471.2" y="20.0" width="36.1" height="9.6" rx="2" fill="#a877ff"/><rect x="511.3" y="92.8" width="36.1" height="131.7" rx="2" fill="#31d9ff"/><rect x="511.3" y="92.2" width="36.1" height="0.0" rx="2" fill="#58e7ad"/><text x="529.4" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">26·04</text><rect x="551.4" y="160.1" width="36.1" height="64.4" rx="2" fill="#31d9ff"/><rect x="551.4" y="157.4" width="36.1" height="1.2" rx="2" fill="#a877ff"/><rect x="551.4" y="149.3" width="36.1" height="6.6" rx="2" fill="#58e7ad"/><rect x="591.6" y="161.0" width="36.1" height="63.5" rx="2" fill="#31d9ff"/><rect x="591.6" y="151.4" width="36.1" height="8.1" rx="2" fill="#a877ff"/><rect x="591.6" y="150.8" width="36.1" height="0.0" rx="2" fill="#58e7ad"/><text x="609.6" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">26·06</text><rect x="631.7" y="133.2" width="36.1" height="91.3" rx="2" fill="#31d9ff"/><rect x="631.7" y="129.3" width="36.1" height="2.4" rx="2" fill="#a877ff"/><rect x="631.7" y="129.0" width="36.1" height="0.0" rx="2" fill="#58e7ad"/><rect x="671.8" y="177.8" width="36.1" height="46.7" rx="2" fill="#31d9ff"/><text x="689.8" y="242" text-anchor="middle" font-size="11" fill="#7d8ba3" font-family="JetBrains Mono,monospace">26·08</text><rect x="711.9" y="222.7" width="36.1" height="1.8" rx="2" fill="#31d9ff"/></svg></div><div class="legend"><span><i style="background:#31d9ff"></i>Analytics · Python</span><span><i style="background:#a877ff"></i>Execution engine · Rust</span><span><i style="background:#58e7ad"></i>On-chain program · Anchor</span></div><div class="cap">Commits per month, from git across the three repositories · Apr 2025 to Sep 2026</div></div></div><details class="more rv"><summary><span class="def">The milestones</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><div class=tl data-stagger><div class="m rv"><div class="d">Apr 2025</div><div class="t">One 1,295-line Python file, written in a Grok web chat. I had never opened an IDE.</div></div><div class="m rv"><div class="d">Jul 2025</div><div class="t">Dashboard. Continuous tracking begins.</div></div><div class="m rv"><div class="d">Oct 2025</div><div class="t">Claude Code becomes the workshop. Sharded price feed. First independent AI auditors.</div></div><div class="m rv"><div class="d">Nov 2025</div><div class="t">Second server, Rust engine, encrypted tunnel. The delivery workflow is born.</div></div><div class="m rv"><div class="d">Feb 2026</div><div class="t">Specialist sub-agents: research, plan, implement, audit, verify.</div></div><div class="m rv"><div class="d">Mar 2026</div><div class="t">First confirmed on-chain trade.</div></div><div class="m rv"><div class="d">Jun 2026</div><div class="t">On-chain program live on mainnet.</div></div><div class="m rv"><div class="d">Sep 2026</div><div class="t">Three codebases, 112 documented workflow runs, my own funds in production.</div></div></div><p class="note rv">The delivery loop is its own case study. This one is about what it produced.</p></div></div></div></details></div></section><section class="sec" id="what"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">What it does</div></div><h2 class="rv">From a chat message to an on-chain trade, unattended</h2><p class="lead rv">Four jobs, one dashboard. I choose which public signals to follow with my own funds; the system listens, ranks, executes inside fixed caps and contains the damage when something goes wrong.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="banner rv"><svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Signals in, a ranked and contained trade out"><defs><linearGradient id="ppw" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff"/><stop offset=".55" stop-color="#31d9ff"/><stop offset="1" stop-color="#58e7ad"/></linearGradient><linearGradient id="pph" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff" stop-opacity=".7"/><stop offset=".5" stop-color="#31d9ff" stop-opacity=".8"/><stop offset="1" stop-color="#58e7ad" stop-opacity=".6"/></linearGradient><radialGradient id="ppg"><stop offset="0" stop-color="#31d9ff" stop-opacity=".22"/><stop offset="1" stop-color="#31d9ff" stop-opacity="0"/></radialGradient><radialGradient id="ppgv"><stop offset="0" stop-color="#a877ff" stop-opacity=".18"/><stop offset="1" stop-color="#a877ff" stop-opacity="0"/></radialGradient><filter id="ppb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter><pattern id="ppd" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#a7b4c9" fill-opacity=".16"/></pattern></defs><rect width="720" height="200" fill="url(#ppd)"/><circle cx="144" cy="20" r="180" fill="url(#ppg)"/><circle cx="612" cy="180" r="180" fill="url(#ppgv)"/><rect x="24" y="44" width="90" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="69" y="57.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">TELEGRAM</text><rect x="24" y="90" width="120" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="84" y="103.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">TRACKED WALLETS</text><rect x="24" y="136" width="100" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="74" y="149.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">LIVE PRICES</text><polyline points="114,54 150,54 176,100 200,100" fill="none" stroke="url(#ppw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#ppb)" stroke-linejoin="round"/><polyline points="114,54 150,54 176,100 200,100" fill="none" stroke="url(#ppw)" stroke-width="1.5" stroke-linejoin="round"/><polyline points="144,100 200,100" fill="none" stroke="url(#ppw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#ppb)" stroke-linejoin="round"/><polyline points="144,100 200,100" fill="none" stroke="url(#ppw)" stroke-width="1.5" stroke-linejoin="round"/><polyline points="124,146 150,146 176,100" fill="none" stroke="url(#ppw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#ppb)" stroke-linejoin="round"/><polyline points="124,146 150,146 176,100" fill="none" stroke="url(#ppw)" stroke-width="1.5" stroke-linejoin="round"/><rect x="200" y="66" width="166" height="68" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#pph)" stroke-opacity=".75"/><rect x="212" y="66" width="142" height="1" fill="#31d9ff" fill-opacity=".9"/><text x="214" y="92" font-size="12.5" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Detect and rank</text><text x="214" y="110" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">8 workers · 17 strategies</text><polyline points="366,100 404,100" fill="none" stroke="url(#ppw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#ppb)" stroke-linejoin="round"/><polyline points="366,100 404,100" fill="none" stroke="url(#ppw)" stroke-width="1.5" stroke-linejoin="round"/><rect x="404" y="66" width="150" height="68" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#pph)" stroke-opacity=".75"/><rect x="416" y="66" width="126" height="1" fill="#31d9ff" fill-opacity=".9"/><text x="418" y="92" font-size="12.5" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Rust engine</text><text x="418" y="110" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">66 ms engine time</text><polyline points="554,100 592,100" fill="none" stroke="url(#ppw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#ppb)" stroke-linejoin="round"/><polyline points="554,100 592,100" fill="none" stroke="url(#ppw)" stroke-width="1.5" stroke-linejoin="round"/><rect x="592" y="66" width="104" height="68" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#pph)" stroke-opacity=".75"/><rect x="604" y="66" width="80" height="1" fill="#58e7ad" fill-opacity=".9"/><text x="606" y="92" font-size="12.5" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Solana</text><text x="606" y="110" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">on-chain · caps</text><path d="M200,152 L696,152" stroke="#7d8ba3" stroke-opacity=".35" stroke-dasharray="2 4"/><text x="448" y="172" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">KILL SWITCH · PER-TRADE AND DAILY CAPS · CIRCUIT BREAKERS, FAIL CLOSED</text></svg></div></div><div class="cards c4" data-stagger style="margin-top:14px"><div class="card rv"><div class="label">Listen</div><div class="stat" style="border:0;padding:0"><span class="n" style="font-size:clamp(1.75rem,1.2vw + 1.4rem,2.5rem)">149</span><span class="l">live sources: 63 groups, 86 wallets, 4 chains</span></div><p>Every message and every wallet transaction, around the clock.</p></div><div class="card rv"><div class="label">Rank</div><div class="stat" style="border:0;padding:0"><span class="n" style="font-size:clamp(1.75rem,1.2vw + 1.4rem,2.5rem)">17</span><span class="l">exit strategies replayed per source, per regime</span></div><p>Every source scored by what each strategy would have done.</p></div><div class="card rv"><div class="label">Execute</div><div class="stat" style="border:0;padding:0"><span class="n" style="font-size:clamp(1.75rem,1.2vw + 1.4rem,2.5rem)">66 ms</span><span class="l">engine time per trade, median of 1,228</span></div><p>A Rust engine on its own server builds the transaction itself, from quote to submit, and manages the exit. The chain then takes about 0.6 s to confirm.</p></div><div class="card rv"><div class="label">Contain</div><div class="stat" style="border:0;padding:0"><span class="n" style="font-size:clamp(1.75rem,1.2vw + 1.4rem,2.5rem)">4</span><span class="l">fail-closed control layers</span></div><p>Kill switch, per-trade and daily caps, circuit breakers.</p></div></div><details class="more rv"><summary><span class="def">See it on the dashboard</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><p class="note rv">I choose which public signals to follow with my own funds. Execution stays inside fixed caps, and every step is observable on one dashboard.</p></div></div></div></details></div></section><section class="sec" id="infra"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Infrastructure</div></div><h2 class="rv">Two servers, one encrypted tunnel, and the Solana blockchain</h2><p class="lead rv">Analysis is heavy and chatty; execution has to be fast and quiet. So the brain and the hands live on two Hetzner machines joined by an encrypted tunnel, and the hands keep closing positions even if the brain goes down.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="banner rv"><svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two servers joined by an encrypted tunnel, and the chain"><defs><linearGradient id="svw" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff"/><stop offset=".55" stop-color="#31d9ff"/><stop offset="1" stop-color="#58e7ad"/></linearGradient><linearGradient id="svh" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff" stop-opacity=".7"/><stop offset=".5" stop-color="#31d9ff" stop-opacity=".8"/><stop offset="1" stop-color="#58e7ad" stop-opacity=".6"/></linearGradient><radialGradient id="svg"><stop offset="0" stop-color="#31d9ff" stop-opacity=".22"/><stop offset="1" stop-color="#31d9ff" stop-opacity="0"/></radialGradient><radialGradient id="svgv"><stop offset="0" stop-color="#a877ff" stop-opacity=".18"/><stop offset="1" stop-color="#a877ff" stop-opacity="0"/></radialGradient><filter id="svb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter><pattern id="svd" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#a7b4c9" fill-opacity=".16"/></pattern></defs><rect width="720" height="200" fill="url(#svd)"/><circle cx="230" cy="100" r="180" fill="url(#svg)"/><circle cx="475" cy="100" r="180" fill="url(#svg)"/><rect x="20" y="34" width="84" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="62" y="47.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">TELEGRAM</text><rect x="20" y="64" width="108" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="74" y="77.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">WALLET STREAM</text><rect x="20" y="94" width="100" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="70" y="107.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">PRICE STREAM</text><rect x="20" y="124" width="100" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#a877ff" stroke-opacity=".45"/><text x="70" y="137.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#a877ff" font-family="JetBrains Mono,monospace">MARKET DATA</text><polyline points="104,44 150,44 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="104,44 150,44 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round"/><polyline points="128,74 150,74 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="128,74 150,74 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round"/><polyline points="128,104 150,104 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="128,104 150,104 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round"/><polyline points="128,134 150,134 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="128,134 150,134 168,90 190,90" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round"/><rect x="186" y="46" width="176" height="92" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#svh)" stroke-opacity=".75"/><rect x="198" y="46" width="152" height="1" fill="#31d9ff" fill-opacity=".9"/><text x="200" y="72" font-size="12.5" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Finland · the brain</text><text x="200" y="90" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">Python · TimescaleDB</text><line x1="362" x2="420" y1="92" y2="92" stroke="#31d9ff" stroke-width="6" stroke-opacity=".12"/><polyline points="362,92 420,92" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="362,92 420,92" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="3 5"/><text x="391" y="78" text-anchor="middle" font-size="7.5" letter-spacing="1" fill="#31d9ff" font-family="JetBrains Mono,monospace">WIREGUARD</text><rect x="420" y="46" width="172" height="92" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#svh)" stroke-opacity=".75"/><rect x="432" y="46" width="148" height="1" fill="#31d9ff" fill-opacity=".9"/><text x="434" y="72" font-size="12.5" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Nuremberg · the hands</text><text x="434" y="90" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">Rust · signed signals</text><polyline points="592,92 630,92" fill="none" stroke="url(#svw)" stroke-width="4.5" stroke-opacity=".18" filter="url(#svb)" stroke-linejoin="round"/><polyline points="592,92 630,92" fill="none" stroke="url(#svw)" stroke-width="1.5" stroke-linejoin="round"/><rect x="630" y="60" width="72" height="64" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#svh)" stroke-opacity=".75"/><rect x="642" y="60" width="48" height="1" fill="#58e7ad" fill-opacity=".9"/><text x="644" y="82" font-size="11" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Solana</text><text x="644" y="98" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">mainnet</text><text x="275" y="166" text-anchor="middle" font-size="8.5" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">ANALYSIS, HEAVY AND CHATTY</text><text x="503" y="166" text-anchor="middle" font-size="8.5" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">EXECUTION, FAST AND QUIET</text></svg></div></div><details class="more rv"><summary><span class="def">The full map, box by box</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><div class="infra" data-stagger><div class="node v rv"><div class="label">External feeds</div><h3>Signals in</h3><div class="sub">raw signals · prices · transactions</div><ul><li>Telegram · 63 groups, read as messages arrive</li><li>Birdeye price WebSocket · 15-second candles · 8 sharded connections</li><li>Helius wallet WebSocket · every transaction of 86 tracked wallets</li><li>Market data · Nansen · DefiLlama · CoinGecko · CoinMarketCap</li></ul></div><div class="node c rv"><div class="label">My servers</div><h3>Finland · Hetzner</h3><div class="sub">the brain · Python</div><ul><li>Detection and queues · 8 workers, 5-layer dedup</li><li>TimescaleDB · 28 GB · 12.3M rows</li><li>Replay and sizing engine · nightly, 17 strategies</li><li>Regime classifier · 27 signals, daily</li><li>Operator dashboard · 202 endpoints</li></ul></div><div class="node c rv"><div class="label">My servers · WireGuard tunnel between them</div><h3>Nuremberg · Hetzner</h3><div class="sub">the hands · Rust</div><ul><li>Signal subscriber · verify, dedupe, fan out</li><li>Jupiter routing · hand-built transactions</li><li>Helius Sender · ~1 s to confirmation</li><li>Position monitor · prices decoded on-chain</li><li>Two lanes · main wallet · program-owned account</li><li>Controls · kill switch, caps, breakers</li></ul></div><div class="node g rv"><div class="label">On-chain</div><h3>Solana mainnet</h3><div class="sub">signed transactions out · confirmations and live prices back</div><ul><li>Anchor program · on-chain limits on the trading key</li><li>Jupiter v6 · live since Jun 2026</li></ul></div></div><div class="legend rv"><span><i style="background:var(--violet)"></i>external inputs</span><span><i style="background:var(--accent)"></i>my servers</span><span><i style="background:var(--green)"></i>on-chain</span></div><p class="note rv">Why two servers? Analysis is heavy and chatty. Execution has to be fast and quiet. Splitting them keeps a dashboard spike or a nightly job off the trade&#x27;s critical path, and the engine keeps closing positions if the brain goes down.</p></div></div></div></details></div></section><section class="sec" id="engine"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">The execution engine · built, not bought</div></div><h2 class="rv">No trading library. The engine assembles the transaction itself.</h2><p class="lead rv">22 modules and 54,000 lines of Rust on their own server, doing one job: turn a verified signal into a landed Solana transaction and manage the exit.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="fig rv"><div class="figs-x"><svg viewBox="0 0 720 214" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="One production trade stage by stage, 1,024 ms end to end"><text x="0" y="21" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">Route quote from Jupiter</text><rect x="250" y="8" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="8" width="5.7" height="18" rx="3" fill="#31d9ff"/><text x="263.7" y="21" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">13 ms</text><text x="0" y="55" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">Build and sign the transaction</text><rect x="250" y="42" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="42" width="2.0" height="18" rx="3" fill="#31d9ff"/><text x="260.0" y="55" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">4 ms</text><text x="0" y="89" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">Submit through Helius Sender</text><rect x="250" y="76" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="76" width="6.2" height="18" rx="3" fill="#31d9ff"/><text x="264.2" y="89" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">14 ms</text><text x="0" y="123" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">On-chain program checks</text><rect x="250" y="110" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="110" width="35.2" height="18" rx="3" fill="#31d9ff"/><text x="293.2" y="123" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">80 ms</text><text x="0" y="157" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">Wait for the blockchain to confirm</text><rect x="250" y="144" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="144" width="272.9" height="18" rx="3" fill="#58e7ad"/><text x="530.9" y="157" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">621 ms</text><text x="0" y="191" font-size="12" fill="#a7b4c9" font-family="IBM Plex Sans,sans-serif">Not instrumented per stage</text><rect x="250" y="178" width="450" height="18" rx="3" fill="rgba(255,255,255,.04)"/><rect x="250" y="178" width="128.3" height="18" rx="3" fill="#6b7a94" opacity="0.55"/><text x="386.3" y="191" font-size="12" fill="#f2f6ff" font-family="JetBrains Mono,monospace">292 ms</text></svg></div><div class="cap">One production trade, stage by stage · 1,024 ms end to end, of which 292 ms is not instrumented per stage · latest confirmed trade. 31 ms of the engine's own work; 621 ms waiting for the chain.</div></div></div><div class="metrics" data-stagger><div class="stat rv"><span class="n">66 ms</span><span class="l">engine time per trade, median</span></div><div class="stat rv"><span class="n">196 ms</span><span class="l">90th percentile</span></div><div class="stat rv"><span class="n">1,245</span><span class="l">test functions in the engine</span></div></div><details class="more rv"><summary><span class="def">How the transaction is built and hardened</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><ul class="points" data-stagger><li class="rv">Exactly one compute-unit limit and one price, Jupiter&#x27;s instructions verbatim, a validator tip from a 10-account pool, address lookup tables. Preflight off, zero retries, confirmation polled every 200 ms against a ~400 ms block.</li><li class="rv">Solana gives a transaction 1,232 bytes, and a fresh pump.fun route does not fit. Seven constant venue accounts are pre-warmed into the engine&#x27;s own lookup table, appended and never prepended, because prepending re-inflates every healthy route.</li><li class="rv">Exit prices are decoded from the pool&#x27;s own bytes on-chain, 8 venues at exact byte offsets, with the router only as fallback. Signals cross the tunnel HMAC-signed with a freshness window and an idempotency cache, so a duplicate message is designed never to become a duplicate buy.</li></ul><p class="fn rv">Engine time counts the engine&#x27;s own work per trade: price quote, route, transaction build and submit. Median 66 ms and 90th percentile 196 ms across the 1,228 buys with stage timings; 90% under 200 ms. The chain&#x27;s confirmation adds a median 625 ms on top. Every control fails closed: kill switch on entries, a 30 SOL cap enforced in three independent places, sizing that refuses on a missing SOL/USD price, a sell circuit breaker at three retries. 32K lines of tests.</p></div></div></div></details></div></section><section class="sec" id="data"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Real-time data</div></div><h2 class="rv">The price provider caps a connection at 100 addresses. I needed 552.</h2><p class="lead rv">So the live price feed is split across auto-scaling connections, placed by a stable hash so nothing moves on a restart, and every 15-second candle lands in a time-series database built for exactly this.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="banner rv"><svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="552 contracts spread over 8 connections under a 100-address cap; placement survives restarts"><defs><linearGradient id="shw" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff"/><stop offset=".55" stop-color="#31d9ff"/><stop offset="1" stop-color="#58e7ad"/></linearGradient><linearGradient id="shh" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff" stop-opacity=".7"/><stop offset=".5" stop-color="#31d9ff" stop-opacity=".8"/><stop offset="1" stop-color="#58e7ad" stop-opacity=".6"/></linearGradient><radialGradient id="shg"><stop offset="0" stop-color="#31d9ff" stop-opacity=".22"/><stop offset="1" stop-color="#31d9ff" stop-opacity="0"/></radialGradient><radialGradient id="shgv"><stop offset="0" stop-color="#a877ff" stop-opacity=".18"/><stop offset="1" stop-color="#a877ff" stop-opacity="0"/></radialGradient><filter id="shb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter><pattern id="shd" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#a7b4c9" fill-opacity=".16"/></pattern></defs><rect width="720" height="200" fill="url(#shd)"/><circle cx="252" cy="100" r="180" fill="url(#shg)"/><line x1="24" x2="490" y1="56" y2="56" stroke="#ff8f8f" stroke-opacity=".6" stroke-dasharray="3 4"/><text x="24" y="46" text-anchor="start" font-size="8.5" letter-spacing="1" fill="#ff8f8f" font-family="JetBrains Mono,monospace">PROVIDER CAP · 100 PER CONNECTION</text><rect x="36" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="40" y="86" width="28" height="70" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="40" y="86" width="28" height="1.5" fill="#31d9ff"/><text x="54.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S1</text><text x="54.0" y="81" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">70</text><rect x="94" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="98" y="88" width="28" height="68" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="98" y="88" width="28" height="1.5" fill="#31d9ff"/><text x="112.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S2</text><text x="112.0" y="83" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">68</text><rect x="152" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="156" y="85" width="28" height="71" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="156" y="85" width="28" height="1.5" fill="#31d9ff"/><text x="170.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S3</text><text x="170.0" y="80" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">71</text><rect x="210" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="214" y="87" width="28" height="69" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="214" y="87" width="28" height="1.5" fill="#31d9ff"/><text x="228.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S4</text><text x="228.0" y="82" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">69</text><rect x="268" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="272" y="86" width="28" height="70" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="272" y="86" width="28" height="1.5" fill="#31d9ff"/><text x="286.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S5</text><text x="286.0" y="81" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">70</text><rect x="326" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="330" y="89" width="28" height="67" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="330" y="89" width="28" height="1.5" fill="#31d9ff"/><text x="344.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S6</text><text x="344.0" y="84" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">67</text><rect x="384" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="388" y="87" width="28" height="69" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="388" y="87" width="28" height="1.5" fill="#31d9ff"/><text x="402.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S7</text><text x="402.0" y="82" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">69</text><rect x="442" y="56" width="36" height="100" rx="8" fill="#0b1220" fill-opacity=".9" stroke="url(#shh)" stroke-opacity=".55"/><rect x="446" y="88" width="28" height="68" rx="6" fill="#31d9ff" fill-opacity=".22"/><rect x="446" y="88" width="28" height="1.5" fill="#31d9ff"/><text x="460.0" y="176" text-anchor="middle" font-size="8" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">S8</text><text x="460.0" y="83" text-anchor="middle" font-size="8.5" fill="#a7b4c9" font-family="JetBrains Mono,monospace">68</text><rect x="528" y="56" width="168" height="100" rx="10" fill="#0b1220" fill-opacity=".92" stroke="url(#shh)" stroke-opacity=".75"/><rect x="540" y="56" width="144" height="1" fill="#58e7ad" fill-opacity=".9"/><text x="542" y="78" font-size="11" font-weight="500" fill="#f2f6ff" font-family="IBM Plex Sans,sans-serif">Placed by hash</text><text x="542" y="94" font-size="9.5" fill="#7d8ba3" font-family="JetBrains Mono,monospace">SHA-256, not salted</text><circle cx="568" cy="122" r="8.4" fill="#58e7ad" fill-opacity=".28" filter="url(#shb)"/><circle cx="568" cy="122" r="3.5" fill="#58e7ad"/><path d="M568,122 C 588,96 628,96 648,122" fill="none" stroke="#58e7ad" stroke-opacity=".85" stroke-dasharray="3 3"/><circle cx="648" cy="122" r="8.4" fill="#58e7ad" fill-opacity=".28" filter="url(#shb)"/><circle cx="648" cy="122" r="3.5" fill="#58e7ad"/><text x="608" y="142" text-anchor="middle" font-size="8" letter-spacing="1" fill="#58e7ad" font-family="JetBrains Mono,monospace">RESTART → SAME SHARD</text><text x="24" y="194" text-anchor="start" font-size="8.5" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">552 CONTRACTS · 8 CONNECTIONS · 6 NEEDED, 2 HEADROOM</text></svg></div></div><div class="metrics" data-stagger><div class="stat rv"><span class="n">8</span><span class="l">shards live · 6 needed, 2 headroom</span></div><div class="stat rv"><span class="n">552</span><span class="l">contracts on the feed</span></div><div class="stat rv"><span class="n">12.3M</span><span class="l">rows in TimescaleDB</span></div></div><details class="more rv"><summary><span class="def">How the feed is sharded</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><ul class="points" data-stagger><li class="rv">The feed is sharded across auto-scaling WebSocket connections, placed by SHA-256 hash so placement survives restarts. Python&#x27;s built-in hash is salted per process and was rejected.</li><li class="rv">The scaler acts on the busiest shard, not the average, with hysteresis and a dry run before any scale-down. An average of 77 can hide a shard at 85.</li><li class="rv">Every 15-second candle lands in TimescaleDB. The hot read runs 230× faster through a continuous aggregate.</li></ul><p class="note rv">Still open, and written down: the feed is certified for today&#x27;s load, not for 1,500 contracts. The docs say so, and they list the defects that block the next step.</p></div></div></div></details></div></section><section class="sec" id="controls"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">On-chain controls</div></div><h2 class="rv">A trading key that cannot move the money</h2><p class="lead rv">My funds sit in a program-owned account on Solana. The engine holds a separate trading key that can open and close positions inside limits the program enforces on every transaction, and can never withdraw.</p></div><div class="keys" data-stagger style="margin-top:clamp(2rem,4vw,3rem)"><div class="key g rv"><h3>My wallet key</h3><ul><li>Deposit</li><li>Withdraw</li><li>Pause</li><li>Revoke the trading key</li></ul></div><div class="key c rv"><h3>Trading key, held by the engine</h3><ul><li>Open positions</li><li>Close positions</li></ul><div class="no">cannot withdraw · ever</div></div></div><div class="metrics" data-stagger><div class="stat rv"><span class="n">73</span><span class="l">tests run on a fork of mainnet</span></div><div class="stat rv"><span class="n">46</span><span class="l">unit tests</span></div><div class="stat rv"><span class="n">14</span><span class="l">program instructions · 43 error codes</span></div></div><details class="more rv"><summary><span class="def">How the program enforces it</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><ul class="points" data-stagger><li class="rv">My funds sit in a program-owned account on Solana. My wallet key is the only authority that can deposit, withdraw, pause, or revoke the trader.</li><li class="rv">The engine holds a separate executor key that can only open and close positions, inside limits the program enforces on every transaction.</li><li class="rv">Router instructions arrive as opaque account lists, so they are constrained rather than trusted: capped at 64 accounts, every writable account allowlisted, only two route discriminators accepted.</li></ul><div class="rules rv"><div class="lab">Rules enforced by the program, not by policy</div><span>0.5 SOL per trade</span><span>2 SOL per day</span><span>lamports spent and tokens sold counted separately</span><span>10 Token-2022 extensions rejected</span><span>transfer fee capped at 200 bps</span><span>the account pays its own fees from a separate counter</span></div><p class="fn rv">Signing detail: Phantom rewrites the message at signing, so raw-byte binding is impossible. Authorization verifies Ed25519 at the signer&#x27;s slot index and binds each meaningful field individually.</p></div></div></div></details></div></section><section class="sec" id="intelligence"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Intelligence</div></div><h2 class="rv">Every tracked source replayed through 17 strategies, nightly</h2><p class="lead rv">Every source is scored by what each of 17 exit strategies would have done, across chains and market regimes, precomputed each night so every page loads instantly.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="fig rv"><div class="figs-x"><svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The replay cube: sources by strategies by chains by regimes">
+<defs><linearGradient id="cg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#31d9ff" stop-opacity=".9"/><stop offset="1" stop-color="#a877ff" stop-opacity=".9"/></linearGradient></defs>
+<g transform="translate(40,20)">
+<polygon points="0,90 120,30 240,90 120,150" fill="rgba(49,217,255,.10)" stroke="#31d9ff" stroke-opacity=".8"/>
+<polygon points="0,90 120,150 120,270 0,210" fill="rgba(168,119,255,.10)" stroke="#a877ff" stroke-opacity=".8"/>
+<polygon points="120,150 240,90 240,210 120,270" fill="rgba(88,231,173,.08)" stroke="#58e7ad" stroke-opacity=".8"/>
+<g stroke="rgba(255,255,255,.14)"><line x1="40" y1="70" x2="160" y2="130"/><line x1="80" y1="50" x2="200" y2="110"/><line x1="60" y1="120" x2="180" y2="60"/><line x1="0" y1="150" x2="120" y2="210"/><line x1="0" y1="180" x2="120" y2="240"/><line x1="120" y1="180" x2="240" y2="120"/><line x1="120" y1="210" x2="240" y2="150"/><line x1="120" y1="240" x2="240" y2="180"/><line x1="40" y1="110" x2="40" y2="230"/><line x1="80" y1="130" x2="80" y2="250"/><line x1="160" y1="130" x2="160" y2="250"/><line x1="200" y1="110" x2="200" y2="230"/></g>
+</g>
+<g font-family="JetBrains Mono,monospace" font-size="11" fill="#a7b4c9">
+<text x="330" y="60"><tspan fill="#31d9ff" font-size="20">300+</tspan> sources ever tracked</text>
+<text x="330" y="110"><tspan fill="#a877ff" font-size="20">17</tspan> exit strategies</text>
+<text x="330" y="160"><tspan fill="#58e7ad" font-size="20">5</tspan> chains × <tspan fill="#58e7ad" font-size="20">4</tspan> market regimes</text>
+<line x1="330" x2="700" y1="185" y2="185" stroke="rgba(255,255,255,.16)"/>
+<text x="330" y="222"><tspan fill="#f2f6ff" font-size="26">6.2M</tspan> precomputed rows</text>
+<text x="330" y="252" fill="#6b7a94">17,820 tasks · about 25 minutes · every night</text>
+</g></svg></div><div class="cap">The replay cube · one cell per source × strategy × chain × regime · 6.2M rows, refilled by 17,820 replay tasks a night</div></div></div><div class="metrics" data-stagger><div class="stat rv"><span class="n">17</span><span class="l">exit strategies</span></div><div class="stat rv"><span class="n">6.2M</span><span class="l">precomputed rows</span></div><div class="stat rv"><span class="n">27</span><span class="l">regime signals</span></div></div><details class="more rv"><summary><span class="def">How the replay works</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><ul class="points" data-stagger><li class="rv">300+ sources ever tracked × 17 exit strategies × 5 chains × 4 market regimes, precomputed nightly so every page loads instantly.</li><li class="rv">Any result can be re-rendered at operator-defined position sizes, seven market-cap tiers deep.</li><li class="rv">The market-regime label is validated on 21,345 real outcomes (z = 4.07, p &lt; 0.0001). Caveat kept: 183 of 407 labeled days are backfilled with a simpler classifier, so this validates the labeling concept, not retroactive production accuracy.</li></ul><p class="fn rv">The replay table carries five chain values; today&#x27;s 40,908 tracked contracts sit on four of them. 17,820 tasks a night, about 25 minutes.</p></div></div></div></details></div></section><section class="sec" id="failures"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Failures → controls</div></div><h2 class="rv">The controls that exist because something broke</h2><p class="lead rv">Three real failures, and the permanent check each one left behind. None of them can happen the same way twice.</p></div><div class="ba" data-stagger style="margin-top:clamp(2rem,4vw,3rem)"><div class="card rv"><div class="broke"><div class="lab">What broke</div>A guard that was too eager deleted 28 real wallet trades across four instruction shapes.</div><div class="now"><div class="lab">What exists now</div>A 7,150-cell differential corpus that asserts every improvement is consumed, run before any parser change ships.</div><div class="big"><span class="n">7,150</span><span class="l">cells checked before a parser change</span></div></div><div class="card rv"><div class="broke"><div class="lab">What broke</div>A concentrated pool was priced 3.02× wrong by reserve ratio, producing a phantom stop-loss.</div><div class="now"><div class="lab">What exists now</div>A structural gate before any decoded price is trusted: decimals match, legs move opposite, both non-zero, then drift bands.</div><div class="big"><span class="n">3.02×</span><span class="l">the error the gate now refuses</span></div></div><div class="card rv"><div class="broke"><div class="lab">What broke</div>The nightly sizing job froze the web process 24 ms per spawn: uvloop&#x27;s fork against a 3.3 GB address space.</div><div class="now"><div class="lab">What exists now</div>The worker moved out of process, 2,623 s → 329 s, and refuses to boot on uvloop at all.</div><div class="big"><span class="n">7.97×</span><span class="l">faster, and a boot-time assertion</span></div></div></div><details class="more rv"><summary><span class="def">In their own words</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><p class="note rv">These three failures are retained as regression gates. Each now fails a build before it can reach production.</p></div></div></div></details></div></section><section class="sec" id="stops"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Where AI verification stops</div></div><h2 class="rv">Agent consensus is not correctness</h2><p class="lead rv">I do not assume that agreement between agents means the code is right. For high-consequence components the check moves outside the agent system, and that escalation is written into the workflow, not left to judgment on the day.</p></div><div style="margin-top:clamp(2rem,4vw,3rem)"><div class="flow" data-stagger><div class="fx rv"><div class="label">Key custody</div><h3>Human specialist, formal audit</h3><p>Changes to custody or withdrawal authority never go through the agent panel alone.</p><span class="ar"></span></div><div class="fx rv"><div class="label">Money-moving code</div><h3>Must run before it ships</h3><p>A runtime test on a fork of mainnet is required for every fund-moving change. Reading the code does not count as running it.</p><span class="ar"></span></div><div class="fx rv"><div class="label">Every risky change</div><h3>A model from another vendor, run by me</h3><p>The external review reads a frozen commit cold. Without a code and runtime receipt, its findings stay open.</p><span class="ar"></span></div></div></div><details class="more rv"><summary><span class="def">What this means in practice</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><ul class="points" data-stagger><li class="rv">The order is: agents implement, independent agents challenge, I validate the behaviour in production, and external specialists validate where the consequences justify it.</li><li class="rv">The panel&#x27;s own ledger records that on 78 of the 92 runs where it was measured, the outside review found something the internal lanes had missed. That number is why the outside check exists.</li></ul></div></div></div></details></div></section><section class="sec" id="measured"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">Measured on the production system · 3 September 2026</div></div><h2 class="rv">Measured, with the populations printed</h2><p class="lead rv">Six numbers from the live database, each with the population it was measured on.</p></div><div class="tiles" data-stagger style="margin-top:clamp(2rem,4vw,3rem)"><div class="card tile rv"><span class="n">1,300</span><div class="l">confirmed trades, one per position</div><div class="s">2,843 on-chain signatures behind them, verifiable on any explorer: 1,685 buy legs, 1,158 sell legs.</div></div><div class="card tile rv"><span class="n">66 ms</span><div class="l">engine time per trade · median of 1,228 buys</div><div class="s">Quote to submitted transaction, the dashboard&#x27;s Bot Speed; 90% under 200 ms. Signal to on-chain confirmation: 1.3 s median, of which the chain&#x27;s confirmation is 625 ms.</div></div><div class="card tile rv"><span class="n">40,908</span><div class="l">contracts tracked · 4 chains</div><div class="s">SOL 34,215 · BSC 3,060 · ETH 2,870 · Base 763</div></div><div class="card tile rv"><span class="n">12.3M</span><div class="l">rows in TimescaleDB</div><div class="s">28 GB · 95 tables</div></div><div class="card tile rv"><span class="n">1,245</span><div class="l">engine test functions</div><div class="s">32K lines of tests</div></div><div class="card tile rv"><span class="n">119</span><div class="l">on-chain program tests</div><div class="s">46 unit + 73 mainnet-fork</div></div></div><details class="more rv"><summary><span class="def">Where the numbers come from</span><span class="alt">Show less</span><span class="c" aria-hidden="true"></span></summary><div class="dbody"><div><div class="inner"><p class="fn rv">371K implementation lines and 5,066 commits across three repositories were generated under the delivery workflow. They measure the workflow&#x27;s output, not me.</p></div></div></div></details></div></section><section class="sec" id="close"><div class="wrap"><div class="head" data-stagger><div class="rv"><div class="kicker">See it running</div></div><h2 class="rv">The system is the proof.</h2><p class="lead rv">Two things I can show live in an interview.</p></div>
+<div style="margin-top:clamp(2rem,4vw,3rem)"><div class="banner rv"><svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two live sessions instead of slides"><defs><linearGradient id="plw" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff"/><stop offset=".55" stop-color="#31d9ff"/><stop offset="1" stop-color="#58e7ad"/></linearGradient><linearGradient id="plh" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="720" y2="0"><stop offset="0" stop-color="#a877ff" stop-opacity=".7"/><stop offset=".5" stop-color="#31d9ff" stop-opacity=".8"/><stop offset="1" stop-color="#58e7ad" stop-opacity=".6"/></linearGradient><radialGradient id="plg"><stop offset="0" stop-color="#31d9ff" stop-opacity=".22"/><stop offset="1" stop-color="#31d9ff" stop-opacity="0"/></radialGradient><radialGradient id="plgv"><stop offset="0" stop-color="#a877ff" stop-opacity=".18"/><stop offset="1" stop-color="#a877ff" stop-opacity="0"/></radialGradient><filter id="plb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter><pattern id="pld" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#a7b4c9" fill-opacity=".16"/></pattern></defs><rect width="720" height="160" fill="url(#pld)"/><circle cx="360" cy="80" r="144" fill="url(#plg)"/><polyline points="24,80 200,80 230,80 250,40 270,120 290,80 420,80 450,80 470,52 490,108 510,80 696,80" fill="none" stroke="url(#plw)" stroke-width="5.4" stroke-opacity=".18" filter="url(#plb)" stroke-linejoin="round"/><polyline points="24,80 200,80 230,80 250,40 270,120 290,80 420,80 450,80 470,52 490,108 510,80 696,80" fill="none" stroke="url(#plw)" stroke-width="1.8" stroke-linejoin="round"/><circle cx="696" cy="80" r="10.8" fill="#58e7ad" fill-opacity=".28" filter="url(#plb)"/><circle cx="696" cy="80" r="4.5" fill="#58e7ad"/><rect x="200" y="120" width="130" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#31d9ff" stroke-opacity=".45"/><text x="265" y="133.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#31d9ff" font-family="JetBrains Mono,monospace">THE PRODUCT, LIVE</text><rect x="420" y="120" width="136" height="20" rx="10" fill="#0b1220" fill-opacity=".9" stroke="#58e7ad" stroke-opacity=".45"/><text x="488" y="133.5" text-anchor="middle" font-size="9.5" letter-spacing="1" fill="#58e7ad" font-family="JetBrains Mono,monospace">THE WORKFLOW, LIVE</text><text x="24" y="34" text-anchor="start" font-size="8.5" letter-spacing="1" fill="#7d8ba3" font-family="JetBrains Mono,monospace">NO SLIDES IN THE INTERVIEW: TWO LIVE SESSIONS</text></svg></div></div>
+<div class="sessions" data-stagger style="margin-top:14px"><div class="card rv"><div class="label">01</div><h3>The product, live</h3><p>Any page of the running system: the feed, the engine, the on-chain controls, and the data behind every number here.</p></div><div class="card rv"><div class="label">02</div><h3>The workflow, live</h3><p>A real task taken through the delivery loop: research, plan, AI implementation, separate review lanes, my go / no-go, verification in production.</p></div></div>
+<p class="note rv"><span class="kicker">the boundary</span>Where I would not use this: a change to key custody or withdrawal authority. That gets a human specialist and a formal audit, not a review panel.</p>
+<div style="margin-top:clamp(2.5rem,5vw,4rem)"><div class="who rv"><div><div class="name">Lukasz Rodzen</div><div class="role">product owner · release owner · operator</div><div class="contact">Poland · remote</div></div><p>I own the product intent, the system boundaries and constraints, the acceptance criteria, the release decision and production verification. AI agents provide much of the implementation-level technical depth: they research, propose designs, write the code and review one another independently. I resolve their disagreements through evidence and decide what ships. I do not claim the unaided technical depth of a senior backend or Rust engineer.</p></div></div>
+<div class="nextlink rv"><a class="card" href="how-i-ship.html"><div><div class="label">Next</div><h3 style="margin-top:.5rem">Case study 2 · How I ship</h3></div><span class="arrow">Open <span class="a">→</span></span></a></div>
+</div></section></main><footer class="foot"><div class="wrap"><p>Specified, reviewed and released by Lukasz Rodzen. Implemented by AI models under the delivery workflow in case study 2. Numbers measured on the production system, the run archive and git, 3 September 2026. Replay and simulation figures are analytical outputs, not returns.</p><p>Poland · remote · 2026</p></div></footer><script>
+document.documentElement.classList.add('js');
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = [].slice.call(document.querySelectorAll('.rv'));
+  document.querySelectorAll('[data-stagger]').forEach(function(g){
+    [].slice.call(g.children).filter(function(e){return e.classList.contains('rv');}).forEach(function(el,i){ el.style.setProperty('--i', i); });
+  });
+  function all(){ els.forEach(function(e){ e.classList.add('in'); }); }
+  if (RM || !('IntersectionObserver' in window)) { all(); }
+  else {
+    var io = new IntersectionObserver(function(entries, obs){
+      entries.forEach(function(en){ if (en.isIntersecting) { en.target.classList.add('in'); obs.unobserve(en.target); } });
+    }, {threshold: 0.12, rootMargin: '0px 0px -10% 0px'});
+    var hero = [].slice.call(document.querySelectorAll('.hero .rv'));
+    els.forEach(function(e){ if (hero.indexOf(e) < 0) io.observe(e); });
+    var play = function(){ hero.forEach(function(e){ e.classList.add('in'); }); };
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(play);
+    setTimeout(play, 900);
+  }
+  var nav = document.querySelector('.nav'), bar = document.querySelector('.bar');
+  var noSDA = !(window.CSS && CSS.supports && CSS.supports('animation-timeline: scroll(root block)'));
+  var tick = false;
+  function onScroll(){
+    if (tick) return; tick = true;
+    requestAnimationFrame(function(){
+      var y = window.scrollY || document.documentElement.scrollTop;
+      nav.classList.toggle('solid', y > 24);
+      if (noSDA && bar) { var max = document.documentElement.scrollHeight - innerHeight; bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(y / max, 1) : 0) + ')'; }
+      tick = false;
+    });
+  }
+  addEventListener('scroll', onScroll, {passive: true}); onScroll();
+  addEventListener('beforeprint', all);
+  document.querySelectorAll('.expand-all').forEach(function(b){ b.addEventListener('click', function(){ var sec=b.closest('section'); var ds=[].slice.call(sec.querySelectorAll('details.acc, details.phase-acc')); var open=ds.some(function(d){return !d.open;}); ds.forEach(function(d){ d.open=open; }); b.textContent = open ? 'Collapse all' : 'Expand every phase and step'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); }); });
+  addEventListener('beforeprint', function(){ [].slice.call(document.querySelectorAll('details')).forEach(function(d){ d.open = true; }); });
+
+})();
+
+
+(function(){
+  const figure = document.getElementById('overview');
+  if (!figure) return;
+  const panel = figure.querySelector('.overview-panel');
+  const video = panel && panel.querySelector('video');
+  const button = panel && panel.querySelector('.overview-play');
+  if (!video || typeof video.play !== 'function' || !button) return;
+  const label = panel.querySelector('.overview-play-label');
+  const error = panel.querySelector('.overview-error');
+  const rest = () => {
+    const action = video.ended ? 'Replay' : video.currentTime > .1 ? 'Resume' : 'Play';
+    label.textContent = action + ' overview';
+    button.setAttribute('aria-label', action + ' overview');
+    button.disabled = false;
+  };
+  video.controls = false;
+  button.hidden = false;
+  rest();
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
+    button.disabled = true;
+    label.textContent = 'Loading…';
+    error.hidden = true;
+    if (video.ended) video.currentTime = 0;
+    if (video.error) video.load();
+    try {
+      await video.play();
+      button.hidden = true;
+      video.controls = true;
+      video.focus({preventScroll:true});
+    } catch (err) {
+      video.controls = true;
+      if (err.name === 'AbortError') rest();
+      else { label.textContent = 'Try again'; error.hidden = false; }
+    } finally { button.disabled = false; }
+  });
+  video.addEventListener('play', () => { button.hidden = true; video.controls = true; error.hidden = true; });
+  video.addEventListener('ended', () => { rest(); button.hidden = false; });
+  video.addEventListener('error', () => {
+    video.controls = true; button.hidden = false; button.disabled = false;
+    label.textContent = 'Try again'; error.hidden = false;
+  });
+})();
+</script></body></html>
